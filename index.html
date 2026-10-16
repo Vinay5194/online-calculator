@@ -1,0 +1,165 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Online Calculator</title>
+<style>
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, #10172a, #253b69);
+  font-family: Arial, sans-serif;
+  color: white;
+}
+.calculator {
+  width: min(350px, 92vw);
+  padding: 24px;
+  border-radius: 24px;
+  background: #18243b;
+  box-shadow: 0 20px 50px #0006;
+}
+h2 { text-align: center; margin-top: 0; }
+#display {
+  width: 100%;
+  height: 75px;
+  margin-bottom: 18px;
+  padding: 12px;
+  border: 0;
+  border-radius: 12px;
+  background: #0b1220;
+  color: white;
+  font-size: 30px;
+  text-align: right;
+}
+.keys {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+button {
+  height: 58px;
+  border: 0;
+  border-radius: 12px;
+  font-size: 20px;
+  font-weight: bold;
+  cursor: pointer;
+  background: #2b3b57;
+  color: white;
+}
+button:hover { filter: brightness(1.2); }
+.operator { background: #2463eb; }
+.clear { background: #e34d59; }
+.equal { background: #16a36a; }
+.zero { grid-column: span 2; }
+footer {
+  text-align: center;
+  color: #b9c5da;
+  font-size: 12px;
+  margin-top: 18px;
+}
+</style>
+</head>
+<body>
+<div class="calculator">
+  <h2>Online Calculator</h2>
+  <input id="display" value="0" readonly aria-label="Calculator display">
+  <div class="keys">
+    <button class="clear" onclick="clearDisplay()">AC</button>
+    <button onclick="backspace()">⌫</button>
+    <button class="operator" onclick="percent()">%</button>
+    <button class="operator" onclick="press('/')">÷</button>
+
+    <button onclick="press('7')">7</button>
+    <button onclick="press('8')">8</button>
+    <button onclick="press('9')">9</button>
+    <button class="operator" onclick="press('*')">×</button>
+
+    <button onclick="press('4')">4</button>
+    <button onclick="press('5')">5</button>
+    <button onclick="press('6')">6</button>
+    <button class="operator" onclick="press('-')">−</button>
+
+    <button onclick="press('1')">1</button>
+    <button onclick="press('2')">2</button>
+    <button onclick="press('3')">3</button>
+    <button class="operator" onclick="press('+')">+</button>
+
+    <button class="zero" onclick="press('0')">0</button>
+    <button onclick="press('.')">.</button>
+    <button class="equal" onclick="calculate()">=</button>
+  </div>
+  <footer>Simple • Fast • Responsive</footer>
+</div>
+
+<script>
+const display = document.getElementById('display');
+let expression = '';
+let finished = false;
+
+function show() {
+  display.value = expression.replace(/\*/g, '×').replace(/\//g, '÷') || '0';
+}
+function press(value) {
+  if (finished && /[0-9.]/.test(value)) expression = '';
+  finished = false;
+
+  if (/[+\-*/]/.test(value) && expression === '' && value !== '-') {
+    return;
+  }
+  if (/[+\-*/]/.test(value) && /[+\-*/]$/.test(expression)) {
+    expression = expression.slice(0, -1);
+  }
+  if (value === '.') {
+    const current = expression.split(/[+\-*/]/).pop();
+    if (current.includes('.')) return;
+  }
+  expression += value;
+  show();
+}
+function clearDisplay() {
+  expression = '';
+  finished = false;
+  show();
+}
+function backspace() {
+  expression = expression.slice(0, -1);
+  finished = false;
+  show();
+}
+function percent() {
+  const match = expression.match(/(\d+\.?\d*)$/);
+  if (!match) return;
+  expression = expression.slice(0, -match[0].length) +
+    String(Number(match[0]) / 100);
+  show();
+}
+function calculate() {
+  if (!expression || /[+\-*/.]$/.test(expression)) return;
+  if (!/^[0-9+\-*/.() ]+$/.test(expression)) return;
+  try {
+    const result = Function('"use strict"; return (' + expression + ')')();
+    if (!Number.isFinite(result)) throw new Error('Invalid result');
+    expression = String(Number(result.toPrecision(12)));
+    finished = true;
+    show();
+  } catch {
+    display.value = 'Error';
+    expression = '';
+    finished = true;
+  }
+}
+document.addEventListener('keydown', e => {
+  if (/^[0-9.]$/.test(e.key)) press(e.key);
+  else if (['+', '-', '*', '/'].includes(e.key)) press(e.key);
+  else if (e.key === 'Enter' || e.key === '=') calculate();
+  else if (e.key === 'Backspace') backspace();
+  else if (e.key === 'Escape') clearDisplay();
+});
+</script>
+</body>
+</html>
